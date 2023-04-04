@@ -1,26 +1,46 @@
-use fundsp::hacker::*;
-use std::fs::File;
-use std::io::BufReader;
-use rodio::{Decoder, OutputStream, source::Source};
-
-fn main() {
-    let wave1 = Wave64::render(44100.0, 10.0, &mut (constant(240.0) >> sine()));
-    let mut filtered_wave = wave1.filter(10.0, &mut ((pass() | lfo(|t| (xerp11(110.0, 880.0, spline_noise(0, t * 5.0)), 1.0))) >> bandpass()));
-    filtered_wave.normalize();
-    filtered_wave.save_wav16("test.wav").expect("Could not save wave.");
-
-    // let wave3 = Wave64::load("test.wav").expect("Could not load wave.");
-// Get a output stream handle to the default physical sound device
-    let (_stream, stream_handle) = OutputStream::try_default().unwrap();
-// Load a sound from a file, using a path relative to Cargo.toml
-    let file = BufReader::new(File::open("test.wav").unwrap());
-// Decode that sound file into a source
-    let source = Decoder::new(file).unwrap();
-// Play the sound directly on the device
-    stream_handle.play_raw(source.convert_samples()).expect("TODO: panic message");
+mod synth;
+mod stream;
 
 
-// The sound plays in a separate audio thread,
-// so we need to keep the main thread alive while it's playing.
-    std::thread::sleep(std::time::Duration::from_secs(15));
+// #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
+
+use eframe::egui;
+
+fn main() -> Result<(), eframe::Error> {
+    // Log to stdout (if you run with `RUST_LOG=debug`).
+    //tracing_subscriber::fmt::init();
+
+    let options = eframe::NativeOptions {
+        initial_window_size: Some(egui::vec2(1200.0, 720.0)),
+        ..Default::default()
+    };
+    eframe::run_native(
+        "Synthia",
+        options,
+        Box::new(|_cc| Box::new(MyApp::default())),
+    )
+}
+
+struct MyApp {}
+
+impl Default for MyApp {
+    fn default() -> Self {
+        MyApp {}
+    }
+}
+
+impl eframe::App for MyApp {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.heading("Synthia");
+            if ui.button("▶").clicked() {
+                synth();
+            }
+        });
+    }
+}
+
+fn synth() {
+    synth::generate_basic().expect("failed to make wav");
+    stream::play_stream().expect("failed to get sink");
 }
