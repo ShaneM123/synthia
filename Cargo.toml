@@ -11,3 +11,4 @@ eframe = "0.21.3"
 egui = "0.21.0"
 fundsp = {version = "0.13.0", features=["default"] }
 rodio = "0.17.1"
+hound = "3.5.0"

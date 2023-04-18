@@ -11,7 +11,7 @@ fn main() -> Result<(), eframe::Error> {
     //tracing_subscriber::fmt::init();
 
     let options = eframe::NativeOptions {
-        initial_window_size: Some(egui::vec2(1200.0, 720.0)),
+        initial_window_size: Some(egui::vec2(800.0, 600.0)),
         ..Default::default()
     };
     eframe::run_native(
@@ -32,15 +32,22 @@ impl Default for MyApp {
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("Synthia");
+            ui.heading("Sine");
             if ui.button("▶").clicked() {
-                synth();
+            synth();
+            }
+            else if ui.button("Rmx'd Sine").clicked() {
+                remix();
             }
         });
     }
 }
 
 fn synth() {
-    synth::generate_basic().expect("failed to make wav");
-    stream::play_stream().expect("failed to get sink");
+    synth::generate_basic_sine().expect("failed to make wav");
+    stream::play_stream("sine.wav".to_owned()).expect("failed to get sink");
+}
+fn remix() {
+    synth::remix_sine().expect("failed to make wav");
+    stream::play_stream("sine_rmx.wav".to_owned()).expect("failed to get sink");
 }
